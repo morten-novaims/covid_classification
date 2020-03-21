@@ -1,2 +1,2 @@
-print("Git trial")
+print("Git test")
 
