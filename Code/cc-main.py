@@ -11,13 +11,17 @@
 # Setup ------------------------------------------------------------------------------------------------------
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Input, Conv2D, MaxPooling2D, Reshape, Activation, BatchNormalization
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Input, Conv2D, MaxPooling2D, Reshape, Activation, \
+    BatchNormalization
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import time
+
+# Set seed
+seed = np.random.randint(100)
 
 # Functions --------------------------------------------------------------------------------------------------
 
@@ -60,6 +64,8 @@ train_n_names = os.listdir(train_n)
 train_c_names = os.listdir(train_c)
 train_p_names = os.listdir(train_p)
 train_o_names = os.listdir(train_o)
+
+
 # test_n_names = os.listdir(test_n)
 # test_c_names = os.listdir(test_c)
 # test_p_names = os.listdir(test_p)
@@ -90,19 +96,21 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
         plt.imshow(x, cmap='gray')
         plt.xlabel('Covid-19, no.' + str(i + 1))
     for i in range(img_per_class):
-        plt.subplot(6, img_per_class // 2, i + 1 + img_per_class*2)
+        plt.subplot(6, img_per_class // 2, i + 1 + img_per_class * 2)
         plt.xticks([])
         plt.yticks([])
         plt.grid(False)
-        x = plt.imread(os.path.join(os.path.join(img_dir, 'PNEUMONIA'), os.listdir(os.path.join(img_dir, 'PNEUMONIA'))[i]))
+        x = plt.imread(
+            os.path.join(os.path.join(img_dir, 'PNEUMONIA'), os.listdir(os.path.join(img_dir, 'PNEUMONIA'))[i]))
         plt.imshow(x, cmap='gray')
         plt.xlabel('Pneumonia, no.' + str(i + 1))
-    plt.tight_layout() # Ensure image labels are not concealed
+    plt.tight_layout()  # Ensure image labels are not concealed
     plt.suptitle('Chest x-rays of 10 normal, covid-19, and pneumonia cases, respectively.', fontsize=16)
-    plt.subplots_adjust(top=0.9) # Space between suptitle and images
+    plt.subplots_adjust(top=0.9)  # Space between suptitle and images
     plt.show()
     plt.savefig(os.path.join(output_dir, 'fig-xray-classes.png'))
     plt.close()
+
 
 plt_classes()
 
@@ -113,9 +121,10 @@ train_datagen = ImageDataGenerator(rescale=1. / 255,
                                    horizontal_flip=True,
                                    rotation_range=33,
                                    width_shift_range=0.25,
-                                   height_shift_range=0.25
-                                   )
-test_datagen = ImageDataGenerator(rescale=1. / 255)
+                                   height_shift_range=0.25,
+                                   validation_split=0.1)
+test_datagen = ImageDataGenerator(rescale=1. / 255,
+                                  validation_split=0.1)
 
 # Set parameters
 image_size = (128, 128)
@@ -123,23 +132,30 @@ train_batch_size = 16
 vt_batch_size = 16
 
 # Now actually preprocess training, test, and validation data
+# To Do: Either store data in separate physical folders, or slightly modify source code from ImageDataGenerator (e.g. see here: https://stackoverflow.com/questions/51952231/keras-how-to-expand-validation-split-to-generate-a-third-set-i-e-test-set)
 train_set = train_datagen.flow_from_directory(train_dir,
                                               target_size=image_size,
                                               batch_size=train_batch_size,
                                               shuffle=True,
                                               class_mode='categorical',
-                                              color_mode='grayscale')
-test_set = test_datagen.flow_from_directory(test_dir,
-                                            target_size=image_size,
-                                            batch_size=vt_batch_size,
-                                            class_mode='categorical',
-                                            # alternatively, could also use 'binary', which would however affect the model design and compliation
-                                            color_mode='grayscale')
-val_set = test_datagen.flow_from_directory(val_dir,
+                                              color_mode='grayscale',
+                                              subset='training',
+                                              seed=seed)
+# test_set = test_datagen.flow_from_directory(train_dir,  # Use again train_dir as all data is stored here
+#                                             target_size=image_size,
+#                                             batch_size=vt_batch_size,
+#                                             class_mode='categorical',
+#                                             # alternatively, could also use 'binary', which would however affect the model design and compliation
+#                                             color_mode='grayscale',
+#                                             subset='testing',
+#                                             seed=seed)
+val_set = test_datagen.flow_from_directory(train_dir,  # Use again train_dir as all data is stored here
                                            target_size=image_size,
                                            batch_size=vt_batch_size,
                                            class_mode='categorical',
-                                           color_mode='grayscale')
+                                           color_mode='grayscale',
+                                           subset='validation',
+                                           seed=seed)
 
 # Build model ------------------------------------------------------------------------------------------------
 # Using the Keras function API
