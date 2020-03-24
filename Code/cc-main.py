@@ -87,7 +87,7 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
         plt.grid(False)
         x = plt.imread(os.path.join(os.path.join(img_dir, 'NORMAL'), os.listdir(os.path.join(img_dir, 'NORMAL'))[i]))
         plt.imshow(x, cmap='gray')
-        plt.xlabel('Normal, no.' + str(i + 1))
+        plt.xlabel('Normal, no. {:02}'.format(i + 1))
     for i in range(img_per_class):
         plt.subplot(6, img_per_class // 2, i + 1 + img_per_class)
         plt.xticks([])
@@ -95,7 +95,7 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
         plt.grid(False)
         x = plt.imread(os.path.join(os.path.join(img_dir, 'CORONA'), os.listdir(os.path.join(img_dir, 'CORONA'))[i]))
         plt.imshow(x, cmap='gray')
-        plt.xlabel('Covid-19, no.' + str(i + 1))
+        plt.xlabel('Covid-19, no. {:02}'.format(i + 1))
     for i in range(img_per_class):
         plt.subplot(6, img_per_class // 2, i + 1 + img_per_class * 2)
         plt.xticks([])
@@ -104,14 +104,13 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
         x = plt.imread(
             os.path.join(os.path.join(img_dir, 'PNEUMONIA'), os.listdir(os.path.join(img_dir, 'PNEUMONIA'))[i]))
         plt.imshow(x, cmap='gray')
-        plt.xlabel('Pneumonia, no.' + str(i + 1))
+        plt.xlabel('Pneumonia, no. {:02}'.format(i + 1))
     plt.tight_layout()  # Ensure image labels are not concealed
     plt.suptitle('Chest x-rays of 10 normal, covid-19, and pneumonia cases, respectively.', fontsize=16)
     plt.subplots_adjust(top=0.9)  # Space between suptitle and images
     plt.show()
     plt.savefig(os.path.join(output_dir, 'fig-xray-classes.png'))
     plt.close()
-
 
 plt_classes()
 
@@ -183,7 +182,7 @@ x = Dense(100, use_bias=False)(x)
 x = BatchNormalization(scale=False, center=True)(x)
 x = Activation('relu')(x)
 x = Dropout(0.3)(x)  # Dropout on dense layer only
-output = Dense(3, activation='softmax', name='img_output')(x)
+output = Dense(4, activation='softmax', name='img_output')(x)
 
 model = Model(inputs=img_input, outputs=output, name='func_model')
 
@@ -193,7 +192,6 @@ set_lr = 0.00015
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=set_lr),
               loss='categorical_crossentropy',
               metrics=['accuracy'])
-
 model.summary()
 
 history = model.fit(train_set,
@@ -203,30 +201,34 @@ history = model.fit(train_set,
                     validation_steps=val_set.n // val_set.batch_size)
 
 # Plot results
-acc = history.history['accuracy']
-val_acc = history.history['val_accuracy']
+def plt_acc_loss(model=history):
+    acc = model.history['accuracy']
+    val_acc = model.history['val_accuracy']
+    loss = model.history['loss']
+    val_loss = model.history['val_loss']
+    # Subplot 1: Accuracy
+    plt.figure(figsize=(8, 8))
+    plt.subplot(2, 1, 1)
+    plt.plot(acc, label='Training Accuracy')
+    plt.plot(val_acc, label='Validation Accuracy')
+    plt.legend(loc='lower right')
+    plt.ylabel('Accuracy')
+    plt.ylim([min(plt.ylim()), 1])
+    plt.title('Training and Validation Accuracy')
+    # Subplot 2: Loss
+    plt.subplot(2, 1, 2)
+    plt.plot(loss, label='Training Loss')
+    plt.plot(val_loss, label='Validation Loss')
+    plt.legend(loc='upper right')
+    plt.ylabel('Cross Entropy')
+    plt.ylim([0, 1.0])
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epoch')
+    plt.show()
+    plt.savefig(os.path.join(output_dir, 'fig_train-val_acc-loss.png'))
+    plt.close()
 
-loss = history.history['loss']
-val_loss = history.history['val_loss']
-
-plt.figure(figsize=(8, 8))
-plt.subplot(2, 1, 1)
-plt.plot(acc, label='Training Accuracy')
-plt.plot(val_acc, label='Validation Accuracy')
-plt.legend(loc='lower right')
-plt.ylabel('Accuracy')
-plt.ylim([min(plt.ylim()), 1])
-plt.title('Training and Validation Accuracy')
-
-plt.subplot(2, 1, 2)
-plt.plot(loss, label='Training Loss')
-plt.plot(val_loss, label='Validation Loss')
-plt.legend(loc='upper right')
-plt.ylabel('Cross Entropy')
-plt.ylim([0, 1.0])
-plt.title('Training and Validation Loss')
-plt.xlabel('Epoch')
-plt.show()
+plt_acc_loss(model=history)
 
 # # Evaluate model ---------------------------------------------------------------------------------------------
 # results = model.evaluate(test_set)
