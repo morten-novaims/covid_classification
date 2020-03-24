@@ -9,6 +9,7 @@
 # ========================================================================================================== #
 # ========================================================================================================== #
 # Setup ------------------------------------------------------------------------------------------------------
+
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Input, Conv2D, MaxPooling2D, Reshape, Activation, \
@@ -122,9 +123,9 @@ train_datagen = ImageDataGenerator(rescale=1. / 255,
                                    rotation_range=33,
                                    width_shift_range=0.25,
                                    height_shift_range=0.25,
-                                   validation_split=0.1)
+                                   validation_split=0.2)
 test_datagen = ImageDataGenerator(rescale=1. / 255,
-                                  validation_split=0.1)
+                                  validation_split=0.2)
 
 # Set parameters
 image_size = (128, 128)
@@ -160,20 +161,17 @@ val_set = test_datagen.flow_from_directory(train_dir,  # Use again train_dir as 
 # Build model ------------------------------------------------------------------------------------------------
 # Using the Keras function API
 img_input = Input(shape=train_set.image_shape, name='img_input')
-x = Conv2D(filters=12, kernel_size=3, padding='same', use_bias=False, name='1st_Conv2D')(
-    img_input)  # no bias necessary before batch norm
-x = BatchNormalization(scale=False, center=True)(x)  # no batch norm scaling necessary before "relu"
-x = Activation('relu')(x)  # activation after batch norm
+
+x = Conv2D(filters=32, kernel_size=6, padding='same', use_bias=False, name='1nd_Conv2D')(
+    img_input) # no bias necessary before batch norm
+x = BatchNormalization(scale=False, center=True)(x) # no batch norm scaling necessary before "relu"
+x = Activation('relu')(x) # activation after batch norm
 
 x = Conv2D(filters=24, kernel_size=3, padding='same', use_bias=False, strides=2, name='2nd_Conv2D')(x)
 x = BatchNormalization(scale=False, center=True)(x)
 x = Activation('relu')(x)
 
-x = Conv2D(filters=12, kernel_size=3, padding='same', use_bias=False, strides=1, name='2.5nd_Conv2D')(x)
-x = BatchNormalization(scale=False, center=True)(x)
-x = Activation('relu')(x)
-
-x = Conv2D(filters=32, kernel_size=6, padding='same', use_bias=False, strides=2, name='3nd_Conv2D')(x)
+x = Conv2D(filters=12, kernel_size=3, padding='same', use_bias=False, strides=1, name='3nd_Conv2D')(x)
 x = BatchNormalization(scale=False, center=True)(x)
 x = Activation('relu')(x)
 
@@ -185,7 +183,7 @@ x = Dense(100, use_bias=False)(x)
 x = BatchNormalization(scale=False, center=True)(x)
 x = Activation('relu')(x)
 x = Dropout(0.3)(x)  # Dropout on dense layer only
-output = Dense(2, activation='softmax', name='img_output')(x)
+output = Dense(3, activation='softmax', name='img_output')(x)
 
 model = Model(inputs=img_input, outputs=output, name='func_model')
 
@@ -230,7 +228,7 @@ plt.title('Training and Validation Loss')
 plt.xlabel('Epoch')
 plt.show()
 
-# Evaluate model ---------------------------------------------------------------------------------------------
-results = model.evaluate(test_set)
-print('Model loss evaluated on the test data: {:.2f}%'.format(results[0] * 100))
-print('Model accuracy evaluated on the test data: {:.2f}%'.format(results[1] * 100))
+# # Evaluate model ---------------------------------------------------------------------------------------------
+# results = model.evaluate(test_set)
+# print('Model loss evaluated on the test data: {:.2f}%'.format(results[0] * 100))
+# print('Model accuracy evaluated on the test data: {:.2f}%'.format(results[1] * 100))
