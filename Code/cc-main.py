@@ -9,22 +9,64 @@
 # ========================================================================================================== #
 # ========================================================================================================== #
 # Setup ------------------------------------------------------------------------------------------------------
-
+from tensorflow.keras.callbacks import Callback
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Input, Conv2D, MaxPooling2D, Reshape, Activation, \
     BatchNormalization
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
+from sklearn.metrics import plot_confusion_matrix
+from scikitplot.metrics import plot_roc
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import time
+import neptune
 
 # Set seed
 seed = np.random.randint(100)
 
 # Functions --------------------------------------------------------------------------------------------------
+
+# Not working here and I couldn't figure out why. Same code in a separate notebook
+#split_folders = True
+#if split_folders:
+#    print("Making folder split...")
+#    shutil.rmtree("Data/split", ignore_errors=True)
+#    split_folders.ratio("Data/train", output="Data/split", seed=1337) # default values
+#    print("Done")
+
+# Adding neptune to the project
+neptune.init('morten/covid-classification')
+neptune.create_experiment('covid-neptune-1')
+
+class NeptuneLoggerCallback(Callback):
+    def __init__(self, model, validation_data):
+        super().__init__()
+        self.model = model
+        self.validation_data = validation_data
+
+    def on_batch_end(self, batch, logs={}):
+        for log_name, log_value in logs.items():
+            neptune.log_metric(f'batch_{log_name}', log_value)
+
+    def on_epoch_end(self, epoch, logs={}):
+        for log_name, log_value in logs.items():
+            neptune.log_metric(f'epoch_{log_name}', log_value)
+#        Leaving this commented as plots were not wokring with multiclass data            
+#        y_pred = np.asarray(self.model.predict(self.validation_data[0]))
+#        y_true = self.validation_data[1]#
+
+#        y_pred_class = np.argmax(y_pred, axis=1)
+
+#        fig, ax = plt.subplots(figsize=(16, 12))
+#        plot_confusion_matrix(y_true, y_pred_class, ax=ax)
+#        neptune.log_image('confusion_matrix', fig)
+
+#        fig, ax = plt.subplots(figsize=(16, 12))
+#        plot_roc(y_true, y_pred, ax=ax)
+#        neptune.log_image('roc_curve', fig)
 
 # Start ==================================================================================================== #
 # Load data --------------------------------------------------------------------------------------------------
@@ -194,11 +236,16 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=set_lr),
               metrics=['accuracy'])
 model.summary()
 
+
+neptune_logger = NeptuneLoggerCallback(model=model,
+                                       validation_data=val_set)
+
 history = model.fit(train_set,
                     steps_per_epoch=train_set.n // train_set.batch_size,
                     epochs=10,
                     validation_data=val_set,
-                    validation_steps=val_set.n // val_set.batch_size)
+                    validation_steps=val_set.n // val_set.batch_size,
+                   callbacks=[neptune_logger])
 
 # Plot results
 def plt_acc_loss(model=history):
