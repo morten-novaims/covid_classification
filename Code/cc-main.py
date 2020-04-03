@@ -62,7 +62,7 @@ class NeptuneLoggerCallback(Callback):
             neptune.log_metric(f'epoch_{log_name}', log_value)
 #        Leaving this commented as plots were not wokring with multiclass data            
 #        y_pred = np.asarray(self.model.predict(self.validation_data[0]))
-#        y_true = self.validation_data[1]#
+#        y_true = self.validation_data[1]
 
 #        y_pred_class = np.argmax(y_pred, axis=1)
 
@@ -77,8 +77,7 @@ class NeptuneLoggerCallback(Callback):
 # Start ==================================================================================================== #
 # Load data --------------------------------------------------------------------------------------------------
 # Set up directories
-main_dir = os.getcwd()
-main_dir = Path(main_dir)
+main_dir = Path(os.getcwd())
 code_dir = os.path.join(main_dir, 'Code')
 data_dir = os.path.join(main_dir.parent, 'Data/split')
 output_dir = os.path.join(main_dir.parent, 'Output')
@@ -88,8 +87,8 @@ test_dir = os.path.join(data_dir, 'test')
 val_dir = os.path.join(data_dir, 'val')
 train_n = os.path.join(train_dir, 'NORMAL')
 train_c = os.path.join(train_dir, 'CORONA')
-train_p = os.path.join(train_dir, 'PNEUMONIA')
-train_o = os.path.join(train_dir, 'OTHER')
+# train_p = os.path.join(train_dir, 'PNEUMONIA')
+# train_o = os.path.join(train_dir, 'OTHER')
 # test_n = os.path.join(test_dir, 'NORMAL')
 # test_c = os.path.join(test_dir, 'CORONA')
 # test_p = os.path.join(test_dir, 'PNEUMONIA')
@@ -105,15 +104,15 @@ print(os.listdir(main_dir))
 print(train_dir)
 print(len(os.listdir(train_n)))
 print(len(os.listdir(train_c)))
-print(len(os.listdir(train_p)))
-print(len(os.listdir(train_o)))
+# print(len(os.listdir(train_p)))
+# print(len(os.listdir(train_o)))
 
 # Plot images ------------------------------------------------------------------------------------------------
 # Save file names
 train_n_names = os.listdir(train_n)
 train_c_names = os.listdir(train_c)
-train_p_names = os.listdir(train_p)
-train_o_names = os.listdir(train_o)
+# train_p_names = os.listdir(train_p)
+# train_o_names = os.listdir(train_o)
 
 
 # test_n_names = os.listdir(test_n)
@@ -161,7 +160,8 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
     plt.savefig(os.path.join(output_dir, 'fig-xray-classes.png'))
     plt.close()
 
-plt_classes()
+
+#plt_classes()
 
 # Data pre-processing ----------------------------------------------------------------------------------------
 train_datagen = ImageDataGenerator(rescale=1. / 255,
@@ -188,7 +188,7 @@ train_set = train_datagen.flow_from_directory(train_dir,
                                               shuffle=True,
                                               class_mode='categorical',
                                               color_mode='grayscale',
-                                              subset='training',
+                                              subset=None,
                                               seed=seed)
 # test_set = test_datagen.flow_from_directory(train_dir,  # Use again train_dir as all data is stored here
 #                                             target_size=image_size,
@@ -198,12 +198,12 @@ train_set = train_datagen.flow_from_directory(train_dir,
 #                                             color_mode='grayscale',
 #                                             subset='testing',
 #                                             seed=seed)
-val_set = test_datagen.flow_from_directory(train_dir,  # Use again train_dir as all data is stored here
+val_set = test_datagen.flow_from_directory(val_dir,  # Use again train_dir as all data is stored here
                                            target_size=image_size,
                                            batch_size=vt_batch_size,
                                            class_mode='categorical',
                                            color_mode='grayscale',
-                                           subset='validation',
+                                           subset=None,
                                            seed=seed)
 
 # Build model ------------------------------------------------------------------------------------------------
@@ -231,7 +231,7 @@ x = Dense(100, use_bias=False)(x)
 x = BatchNormalization(scale=False, center=True)(x)
 x = Activation('relu')(x)
 x = Dropout(0.3)(x)  # Dropout on dense layer only
-output = Dense(4, activation='softmax', name='img_output')(x)
+output = Dense(2, activation='softmax', name='img_output')(x)
 
 model = Model(inputs=img_input, outputs=output, name='func_model')
 
