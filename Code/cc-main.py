@@ -18,6 +18,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
 from sklearn.metrics import plot_confusion_matrix
 from scikitplot.metrics import plot_roc
 import os
+from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -25,6 +26,7 @@ import time
 import neptune
 import shutil
 import split_folders
+import custom_split
 
 # Set seed
 seed = np.random.randint(100)
@@ -37,12 +39,13 @@ split_folders_flag = True
 if split_folders_flag:
     print("Making folder split...")
     shutil.rmtree("../Data/split", ignore_errors=True)
-    split_folders.ratio("../Data/train", output="../Data/split", seed=1337) # default values
+    custom_split.ratio("../Data/train", output="../Data/split", seed=seed, classes=("NORMAL", "CORONA"))  # default values
     print("Done")
 
 # Adding neptune to the project
 neptune.init('morten/covid-classification')
 neptune.create_experiment('covid-neptune-1')
+
 
 class NeptuneLoggerCallback(Callback):
     def __init__(self, model, validation_data):
@@ -75,9 +78,10 @@ class NeptuneLoggerCallback(Callback):
 # Load data --------------------------------------------------------------------------------------------------
 # Set up directories
 main_dir = os.getcwd()
+main_dir = Path(main_dir)
 code_dir = os.path.join(main_dir, 'Code')
-data_dir = os.path.join(main_dir, 'Data')
-output_dir = os.path.join(main_dir, 'Output')
+data_dir = os.path.join(main_dir.parent, 'Data/split')
+output_dir = os.path.join(main_dir.parent, 'Output')
 
 train_dir = os.path.join(data_dir, 'train')
 test_dir = os.path.join(data_dir, 'test')
