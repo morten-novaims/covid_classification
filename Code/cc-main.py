@@ -190,14 +190,14 @@ train_set = train_datagen.flow_from_directory(train_dir,
                                               color_mode='grayscale',
                                               subset=None,
                                               seed=seed)
-# test_set = test_datagen.flow_from_directory(train_dir,  # Use again train_dir as all data is stored here
-#                                             target_size=image_size,
-#                                             batch_size=vt_batch_size,
-#                                             class_mode='categorical',
-#                                             # alternatively, could also use 'binary', which would however affect the model design and compliation
-#                                             color_mode='grayscale',
-#                                             subset='testing',
-#                                             seed=seed)
+test_set = test_datagen.flow_from_directory(test_dir,
+                                             target_size=image_size,
+                                             batch_size=vt_batch_size,
+                                             class_mode='categorical',
+                                             # alternatively, could also use 'binary', which would however affect the model design and compliation
+                                             color_mode='grayscale',
+                                             subset=None,
+                                             seed=seed)
 val_set = test_datagen.flow_from_directory(val_dir,  # Use again train_dir as all data is stored here
                                            target_size=image_size,
                                            batch_size=vt_batch_size,
@@ -247,12 +247,18 @@ model.summary()
 neptune_logger = NeptuneLoggerCallback(model=model,
                                        validation_data=val_set)
 
+# trying class_weights - let's see if it does anything - 1000 because this is roughly the imbalanceness
+# this might as well heavily overfit
+class_weight = {0: 1.,
+                1: 1000.}
+
 history = model.fit(train_set,
                     steps_per_epoch=train_set.n // train_set.batch_size,
-                    epochs=10,
+                    epochs=2,
                     validation_data=val_set,
                     validation_steps=val_set.n // val_set.batch_size,
-                   callbacks=[neptune_logger])
+                    callbacks=[neptune_logger],
+                    class_weight=class_weight)
 
 # Plot results
 def plt_acc_loss(model=history):
@@ -284,7 +290,7 @@ def plt_acc_loss(model=history):
 
 plt_acc_loss(model=history)
 
-# # Evaluate model ---------------------------------------------------------------------------------------------
-# results = model.evaluate(test_set)
-# print('Model loss evaluated on the test data: {:.2f}%'.format(results[0] * 100))
-# print('Model accuracy evaluated on the test data: {:.2f}%'.format(results[1] * 100))
+# Evaluate model ---------------------------------------------------------------------------------------------
+results = model.evaluate(test_set)
+print('Model loss evaluated on the test data: {:.2f}%'.format(results[0] * 100))
+print('Model accuracy evaluated on the test data: {:.2f}%'.format(results[1] * 100))
