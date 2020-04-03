@@ -23,6 +23,8 @@ import pandas as pd
 import numpy as np
 import time
 import neptune
+import shutil
+import split_folders
 
 # Set seed
 seed = np.random.randint(100)
@@ -30,12 +32,13 @@ seed = np.random.randint(100)
 # Functions --------------------------------------------------------------------------------------------------
 
 # Not working here and I couldn't figure out why. Same code in a separate notebook
-#split_folders = True
-#if split_folders:
-#    print("Making folder split...")
-#    shutil.rmtree("Data/split", ignore_errors=True)
-#    split_folders.ratio("Data/train", output="Data/split", seed=1337) # default values
-#    print("Done")
+# Morten: you overwrote the library with a bool + it needs to refer to the parent directory in the current set up
+split_folders_flag = True
+if split_folders_flag:
+    print("Making folder split...")
+    shutil.rmtree("../Data/split", ignore_errors=True)
+    split_folders.ratio("../Data/train", output="../Data/split", seed=1337) # default values
+    print("Done")
 
 # Adding neptune to the project
 neptune.init('morten/covid-classification')
