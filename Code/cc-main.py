@@ -79,8 +79,8 @@ class NeptuneLoggerCallback(Callback):
 # Set up directories
 main_dir = Path(os.getcwd())
 code_dir = os.path.join(main_dir, 'Code')
-data_dir = os.path.join(main_dir.parent, 'Data/split')
-output_dir = os.path.join(main_dir.parent, 'Output')
+data_dir = os.path.join(main_dir, 'Data')
+output_dir = os.path.join(main_dir, 'Output')
 
 train_dir = os.path.join(data_dir, 'train')
 test_dir = os.path.join(data_dir, 'test')
@@ -207,10 +207,33 @@ val_set = test_datagen.flow_from_directory(val_dir,  # Use again train_dir as al
                                            seed=seed)
 
 # Build model ------------------------------------------------------------------------------------------------
+# Set model parameters
+metrics = ['accuracy',
+           ]
+
+metrics = ['accuracy', #tf.keras.metrics.BinaryAccuracy(name='accuracy'),
+           tf.keras.metrics.BinaryCrossentropy(name='binary_crossentropy'),
+           tf.keras.metrics.TruePositives(name='tp'),
+           tf.keras.metrics.FalsePositives(name='fp'),
+           tf.keras.metrics.TrueNegatives(name='tn'),
+           tf.keras.metrics.FalseNegatives(name='fn'),
+           tf.keras.metrics.Precision(name='precision'),
+           ]
+# Flexibly select loss and activation function
+n_classes = len(train_set.class_indices)
+if (n_classes > 1):
+    activation = 'softmax'
+    loss = 'categorical_crossentropy'
+else:
+    activation = 'sigmoid'
+    loss = 'binary_crossentropy'
+# Set learning rate
+set_lr = 0.00015
+
 # Using the Keras function API
 img_input = Input(shape=train_set.image_shape, name='img_input')
 
-x = Conv2D(filters=32, kernel_size=6, padding='same', use_bias=False, name='1nd_Conv2D')(
+x = Conv2D(filters=32, kernel_size=6, padding='same', use_bias=False, name='1st_Conv2D')(
     img_input) # no bias necessary before batch norm
 x = BatchNormalization(scale=False, center=True)(x) # no batch norm scaling necessary before "relu"
 x = Activation('relu')(x) # activation after batch norm
@@ -219,7 +242,7 @@ x = Conv2D(filters=24, kernel_size=3, padding='same', use_bias=False, strides=2,
 x = BatchNormalization(scale=False, center=True)(x)
 x = Activation('relu')(x)
 
-x = Conv2D(filters=12, kernel_size=3, padding='same', use_bias=False, strides=1, name='3nd_Conv2D')(x)
+x = Conv2D(filters=12, kernel_size=3, padding='same', use_bias=False, strides=1, name='3rd_Conv2D')(x)
 x = BatchNormalization(scale=False, center=True)(x)
 x = Activation('relu')(x)
 
@@ -227,20 +250,18 @@ x = Flatten()(x)
 x = Dense(200, use_bias=False)(x)
 x = BatchNormalization(scale=False, center=True)(x)
 x = Activation('relu')(x)
+x = Dropout(0.25)(x)  # Dropout on dense layer only
 x = Dense(100, use_bias=False)(x)
 x = BatchNormalization(scale=False, center=True)(x)
 x = Activation('relu')(x)
-x = Dropout(0.3)(x)  # Dropout on dense layer only
-output = Dense(2, activation='softmax', name='img_output')(x)
+output = Dense(units=n_classes, activation=activation, name='img_output')(x)
 
 model = Model(inputs=img_input, outputs=output, name='func_model')
 
-# Set learning rate
-set_lr = 0.00015
 # Compile model
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=set_lr),
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
+              loss=loss,
+              metrics=metrics)
 model.summary()
 
 
