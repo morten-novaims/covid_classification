@@ -160,7 +160,6 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
     plt.savefig(os.path.join(output_dir, 'fig-xray-classes.png'))
     plt.close()
 
-
 #plt_classes()
 
 # Data pre-processing ----------------------------------------------------------------------------------------
@@ -170,10 +169,8 @@ train_datagen = ImageDataGenerator(rescale=1. / 255,
                                    horizontal_flip=True,
                                    rotation_range=33,
                                    width_shift_range=0.25,
-                                   height_shift_range=0.25,
-                                   validation_split=0.2)
-test_datagen = ImageDataGenerator(rescale=1. / 255,
-                                  validation_split=0.2)
+                                   height_shift_range=0.25)
+test_datagen = ImageDataGenerator(rescale=1. / 255)
 
 # Set parameters
 image_size = (128, 128)
@@ -188,37 +185,30 @@ train_set = train_datagen.flow_from_directory(train_dir,
                                               shuffle=True,
                                               class_mode='categorical',
                                               color_mode='grayscale',
-                                              subset=None,
-                                              seed=seed)
+                                              subset=None)
 test_set = test_datagen.flow_from_directory(test_dir,
                                              target_size=image_size,
                                              batch_size=vt_batch_size,
                                              class_mode='categorical',
                                              # alternatively, could also use 'binary', which would however affect the model design and compliation
                                              color_mode='grayscale',
-                                             subset=None,
-                                             seed=seed)
+                                             subset=None)
 val_set = test_datagen.flow_from_directory(val_dir,  # Use again train_dir as all data is stored here
                                            target_size=image_size,
                                            batch_size=vt_batch_size,
                                            class_mode='categorical',
                                            color_mode='grayscale',
-                                           subset=None,
-                                           seed=seed)
+                                           subset=None)
 
 # Build model ------------------------------------------------------------------------------------------------
 # Set model parameters
-metrics = ['accuracy',
-           ]
-
 metrics = ['accuracy', #tf.keras.metrics.BinaryAccuracy(name='accuracy'),
            tf.keras.metrics.BinaryCrossentropy(name='binary_crossentropy'),
            tf.keras.metrics.TruePositives(name='tp'),
            tf.keras.metrics.FalsePositives(name='fp'),
            tf.keras.metrics.TrueNegatives(name='tn'),
            tf.keras.metrics.FalseNegatives(name='fn'),
-           tf.keras.metrics.Precision(name='precision'),
-           ]
+           tf.keras.metrics.Precision(name='precision')]
 # Flexibly select loss and activation function
 n_classes = len(train_set.class_indices)
 if (n_classes > 1):
