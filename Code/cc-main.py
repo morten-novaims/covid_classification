@@ -33,7 +33,7 @@ seed = np.random.randint(100)
 # Functions --------------------------------------------------------------------------------------------------
 
 # Set up directories
-main_dummy_dir = Path.cwd()
+main_dir = Path.cwd()
 code_dir = main_dir / 'Code'
 data_dir = main_dir / 'Data'
 output_dir = main_dir / 'Output'
