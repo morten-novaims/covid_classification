@@ -33,26 +33,26 @@ seed = np.random.randint(100)
 # Functions --------------------------------------------------------------------------------------------------
 
 # Set up directories
-main_dir = Path(os.getcwd())
-code_dir = os.path.join(main_dir, 'Code')
-data_dir = os.path.join(main_dir, 'Data')
-output_dir = os.path.join(main_dir, 'Output')
+main_dummy_dir = Path.cwd()
+code_dir = main_dir / 'Code'
+data_dir = main_dir / 'Data'
+output_dir = main_dir / 'Output'
 
 # Not working here and I couldn't figure out why. Same code in a separate notebook
 # Morten: you overwrote the library with a bool + it needs to refer to the parent directory in the current set up
-data_split_dir = os.path.join(data_dir, 'split')
+data_split_dir = data_dir / 'split'
 split_folders_flag = True
 if split_folders_flag:
     print("Making folder split...")
     shutil.rmtree(data_split_dir, ignore_errors=True) # shutil.rmtree("../Data/split", ignore_errors=True)
-    custom_split.ratio(os.path.join(data_dir, 'train'),
+    custom_split.ratio(data_dir / 'train',
                        output=data_split_dir,
                        seed=seed,
                        classes=("NORMAL", "CORONA"))  # default values
     print("Done")
 #shutil.rm
 # Adding neptune to the project
-neptune.init(os.path.join('morten', '/covid-classification'))
+neptune.init(Path('morten') / 'covid-classification')
 neptune.create_experiment('covid-neptune-1')
 
 class NeptuneLoggerCallback(Callback):
@@ -85,19 +85,19 @@ class NeptuneLoggerCallback(Callback):
 # Start ==================================================================================================== #
 # Load data --------------------------------------------------------------------------------------------------
 # Set up subdirectory structure
-train_dir = os.path.join(data_split_dir, 'train')
-test_dir = os.path.join(data_split_dir, 'test')
-val_dir = os.path.join(data_split_dir, 'val')
-train_n = os.path.join(train_dir, 'NORMAL')
-train_c = os.path.join(train_dir, 'CORONA')
+train_dir = data_split_dir / 'train'
+test_dir = data_split_dir / 'test'
+val_dir = data_split_dir / 'val'
+train_n = train_dir / 'NORMAL'
+train_c = train_dir / 'CORONA'
 # train_p = os.path.join(train_dir, 'PNEUMONIA')
 # train_o = os.path.join(train_dir, 'OTHER')
-test_n = os.path.join(test_dir, 'NORMAL')
-test_c = os.path.join(test_dir, 'CORONA')
+test_n = test_dir / 'NORMAL'
+test_c = test_dir / 'CORONA'
 # test_p = os.path.join(test_dir, 'PNEUMONIA')
 # test_o = os.path.join(test_dir, 'OTHER')
-val_n = os.path.join(val_dir, 'NORMAL')
-val_c = os.path.join(val_dir, 'CORONA')
+val_n = val_dir / 'NORMAL'
+val_c = val_dir / 'CORONA'
 # val_p = os.path.join(val_dir, 'PNEUMONIA')
 # val_o = os.path.join(val_dir, 'OTHER')
 
@@ -135,7 +135,7 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
         plt.xticks([])
         plt.yticks([])
         plt.grid(False)
-        x = plt.imread(os.path.join(os.path.join(img_dir, 'NORMAL'), os.listdir(os.path.join(img_dir, 'NORMAL'))[i]))
+        x = plt.imread(img_dir / 'NORMAL' / os.listdir(img_dir / 'NORMAL')[i])
         plt.imshow(x, cmap='gray')
         plt.xlabel('Normal, no. {:02}'.format(i + 1))
     for i in range(img_per_class):
@@ -143,7 +143,7 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
         plt.xticks([])
         plt.yticks([])
         plt.grid(False)
-        x = plt.imread(os.path.join(os.path.join(img_dir, 'CORONA'), os.listdir(os.path.join(img_dir, 'CORONA'))[i]))
+        x = plt.imread(img_dir / 'CORONA' / os.listdir(img_dir / 'CORONA')[i])
         plt.imshow(x, cmap='gray')
         plt.xlabel('Covid-19, no. {:02}'.format(i + 1))
     for i in range(img_per_class):
@@ -151,15 +151,14 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
         plt.xticks([])
         plt.yticks([])
         plt.grid(False)
-        x = plt.imread(
-            os.path.join(os.path.join(img_dir, 'PNEUMONIA'), os.listdir(os.path.join(img_dir, 'PNEUMONIA'))[i]))
+        x = plt.imread(img_dir / 'PNEUMONIA' / os.listdir(img_dir / 'PNEUMONIA')[i])
         plt.imshow(x, cmap='gray')
         plt.xlabel('Pneumonia, no. {:02}'.format(i + 1))
     plt.tight_layout()  # Ensure image labels are not concealed
     plt.suptitle('Chest x-rays of 10 normal, covid-19, and pneumonia cases, respectively.', fontsize=16)
     plt.subplots_adjust(top=0.9)  # Space between suptitle and images
     plt.show()
-    plt.savefig(os.path.join(output_dir, 'fig-xray-classes.png'))
+    plt.savefig(output_dir / 'fig-xray-classes.png')
     plt.close()
 
 #plt_classes()
@@ -298,7 +297,7 @@ def plt_acc_loss(model=history):
     plt.title('Training and Validation Loss')
     plt.xlabel('Epoch')
     plt.show()
-    plt.savefig(os.path.join(output_dir, 'fig_train-val_acc-loss.png'))
+    plt.savefig(output_dir / 'fig_train-val_acc-loss.png')
     plt.close()
 
 plt_acc_loss(model=history)
