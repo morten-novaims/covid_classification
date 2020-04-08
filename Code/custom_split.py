@@ -59,7 +59,7 @@ def list_dirs(directory):
 def list_dirs_classes(directory, classes):
     """Returns a list of paths of classes given they exists
     """
-    return [Path(directory) / c for c in classes if Path(directory) / c.is_dir()] #return [Path(directory + '/' + c) for c in classes if Path(directory + '/' + c).is_dir()]
+    return [Path(directory) / c for c in classes if (Path(directory) / c).is_dir()] #return [Path(directory + '/' + c) for c in classes if Path(directory + '/' + c).is_dir()]
 
 
 def list_files(directory):
