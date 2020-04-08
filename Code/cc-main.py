@@ -12,8 +12,7 @@
 from tensorflow.keras.callbacks import Callback
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Input, Conv2D, MaxPooling2D, Reshape, Activation, \
-    BatchNormalization
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Input, Conv2D, MaxPooling2D, Reshape, Activation, BatchNormalization
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
 from sklearn.metrics import plot_confusion_matrix
 from scikitplot.metrics import plot_roc
@@ -33,19 +32,28 @@ seed = np.random.randint(100)
 
 # Functions --------------------------------------------------------------------------------------------------
 
+# Set up directories
+main_dir = Path(os.getcwd())
+code_dir = os.path.join(main_dir, 'Code')
+data_dir = os.path.join(main_dir, 'Data')
+output_dir = os.path.join(main_dir, 'Output')
+
 # Not working here and I couldn't figure out why. Same code in a separate notebook
 # Morten: you overwrote the library with a bool + it needs to refer to the parent directory in the current set up
+data_split_dir = os.path.join(data_dir, 'split')
 split_folders_flag = True
 if split_folders_flag:
     print("Making folder split...")
-    shutil.rmtree("../Data/split", ignore_errors=True)
-    custom_split.ratio("../Data/train", output="../Data/split", seed=seed, classes=("NORMAL", "CORONA"))  # default values
+    shutil.rmtree(data_split_dir, ignore_errors=True) # shutil.rmtree("../Data/split", ignore_errors=True)
+    custom_split.ratio(os.path.join(data_dir, 'train'),
+                       output=data_split_dir,
+                       seed=seed,
+                       classes=("NORMAL", "CORONA"))  # default values
     print("Done")
-
+#shutil.rm
 # Adding neptune to the project
-neptune.init('morten/covid-classification')
+neptune.init(os.path.join('morten', '/covid-classification'))
 neptune.create_experiment('covid-neptune-1')
-
 
 class NeptuneLoggerCallback(Callback):
     def __init__(self, model, validation_data):
@@ -76,25 +84,20 @@ class NeptuneLoggerCallback(Callback):
 
 # Start ==================================================================================================== #
 # Load data --------------------------------------------------------------------------------------------------
-# Set up directories
-main_dir = Path(os.getcwd())
-code_dir = os.path.join(main_dir, 'Code')
-data_dir = os.path.join(main_dir, 'Data')
-output_dir = os.path.join(main_dir, 'Output')
-
-train_dir = os.path.join(data_dir, 'train')
-test_dir = os.path.join(data_dir, 'test')
-val_dir = os.path.join(data_dir, 'val')
+# Set up subdirectory structure
+train_dir = os.path.join(data_split_dir, 'train')
+test_dir = os.path.join(data_split_dir, 'test')
+val_dir = os.path.join(data_split_dir, 'val')
 train_n = os.path.join(train_dir, 'NORMAL')
 train_c = os.path.join(train_dir, 'CORONA')
 # train_p = os.path.join(train_dir, 'PNEUMONIA')
 # train_o = os.path.join(train_dir, 'OTHER')
-# test_n = os.path.join(test_dir, 'NORMAL')
-# test_c = os.path.join(test_dir, 'CORONA')
+test_n = os.path.join(test_dir, 'NORMAL')
+test_c = os.path.join(test_dir, 'CORONA')
 # test_p = os.path.join(test_dir, 'PNEUMONIA')
 # test_o = os.path.join(test_dir, 'OTHER')
-# val_n = os.path.join(val_dir, 'NORMAL')
-# val_c = os.path.join(val_dir, 'CORONA')
+val_n = os.path.join(val_dir, 'NORMAL')
+val_c = os.path.join(val_dir, 'CORONA')
 # val_p = os.path.join(val_dir, 'PNEUMONIA')
 # val_o = os.path.join(val_dir, 'OTHER')
 
@@ -113,7 +116,6 @@ train_n_names = os.listdir(train_n)
 train_c_names = os.listdir(train_c)
 # train_p_names = os.listdir(train_p)
 # train_o_names = os.listdir(train_o)
-
 
 # test_n_names = os.listdir(test_n)
 # test_c_names = os.listdir(test_c)
@@ -202,8 +204,8 @@ val_set = test_datagen.flow_from_directory(val_dir,  # Use again train_dir as al
 
 # Build model ------------------------------------------------------------------------------------------------
 # Set model parameters
-metrics = ['accuracy', #tf.keras.metrics.BinaryAccuracy(name='accuracy'),
-           tf.keras.metrics.BinaryCrossentropy(name='binary_crossentropy'),
+metrics = [tf.keras.metrics.Accuracy(name='accuracy'),
+           tf.keras.metrics.CategoricalCrossentropy(name='categorical_crossentropy'),
            tf.keras.metrics.TruePositives(name='tp'),
            tf.keras.metrics.FalsePositives(name='fp'),
            tf.keras.metrics.TrueNegatives(name='tn'),
