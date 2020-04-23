@@ -118,7 +118,6 @@ train_n_names = os.listdir(train_n)
 train_c_names = os.listdir(train_c)
 # train_p_names = os.listdir(train_p)
 # train_o_names = os.listdir(train_o)
-
 test_n_names = os.listdir(test_n)
 test_c_names = os.listdir(test_c)
 # test_p_names = os.listdir(test_p)
@@ -127,7 +126,6 @@ val_n_names = os.listdir(val_n)
 val_c_names = os.listdir(val_c)
 # val_p_names = os.listdir(val_p)
 # val_o_names = os.listdir(val_o)
-
 
 # Plot first 10 (or individually set amount of) images of each normal, covid-19, and pneumonia x-rays from a given directory
 def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
@@ -148,16 +146,16 @@ def plt_classes(img_dir=train_dir, img_per_class=10, img_size=(10, 10)):
         x = plt.imread(img_dir / 'CORONA' / os.listdir(img_dir / 'CORONA')[i])
         plt.imshow(x, cmap='gray')
         plt.xlabel('Covid-19, no. {:02}'.format(i + 1))
-    for i in range(img_per_class):
-        plt.subplot(6, img_per_class // 2, i + 1 + img_per_class * 2)
-        plt.xticks([])
-        plt.yticks([])
-        plt.grid(False)
-        x = plt.imread(img_dir / 'PNEUMONIA' / os.listdir(img_dir / 'PNEUMONIA')[i])
-        plt.imshow(x, cmap='gray')
-        plt.xlabel('Pneumonia, no. {:02}'.format(i + 1))
+    # for i in range(img_per_class):
+    #     plt.subplot(6, img_per_class // 2, i + 1 + img_per_class * 2)
+    #     plt.xticks([])
+    #     plt.yticks([])
+    #     plt.grid(False)
+    #     x = plt.imread(img_dir / 'PNEUMONIA' / os.listdir(img_dir / 'PNEUMONIA')[i])
+    #     plt.imshow(x, cmap='gray')
+    #     plt.xlabel('Pneumonia, no. {:02}'.format(i + 1))
     plt.tight_layout()  # Ensure image labels are not concealed
-    plt.suptitle('Chest x-rays of 10 normal, covid-19, and pneumonia cases, respectively.', fontsize=16)
+    plt.suptitle('Chest x-rays of 10 normal and covid-19 cases, respectively.', fontsize=16) #plt.suptitle('Chest x-rays of 10 normal, covid-19, and pneumonia cases, respectively.', fontsize=16)
     plt.subplots_adjust(top=0.9)  # Space between suptitle and images
     plt.show()
     plt.savefig(output_dir / 'fig-xray-classes.png')
@@ -252,27 +250,30 @@ output = Dense(units=n_classes, activation=activation, name='img_output')(x)
 model = Model(inputs=img_input, outputs=output, name='func_model')
 
 # Compile model
-model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=set_lr),
-              loss=loss,
-              metrics=metrics)
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=set_lr)
+              , loss=loss
+              , metrics=metrics
+              )
 model.summary()
 
 
-neptune_logger = NeptuneLoggerCallback(model=model,
-                                       validation_data=val_set)
+neptune_logger = NeptuneLoggerCallback(model=model
+                                       , validation_data=val_set
+                                       )
 
 # trying class_weights - let's see if it does anything - 1000 because this is roughly the imbalanceness
 # this might as well heavily overfit
 class_weight = {0: 1.,
                 1: 1000.}
 
-history = model.fit(train_set,
-                    steps_per_epoch=train_set.n // train_set.batch_size,
-                    epochs=2,
-                    validation_data=val_set,
-                    validation_steps=val_set.n // val_set.batch_size,
-                    callbacks=[neptune_logger],
-                    class_weight=class_weight)
+history = model.fit(train_set
+                    , steps_per_epoch=train_set.n // train_set.batch_size
+                    , epochs=10
+                    , validation_data=val_set
+                    , validation_steps=val_set.n // val_set.batch_size
+                    , class_weight=class_weight
+                    , callbacks=[neptune_logger]
+                    )
 
 # Plot results
 def plt_acc_loss(model=history):
