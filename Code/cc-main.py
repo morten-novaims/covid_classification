@@ -333,5 +333,21 @@ tl_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=set_lr)
               , loss=loss
               , metrics=metrics
               )
-
 tl_model.summary()
+
+# Fit model
+tl_history = tl_model.fit(train_set
+                          , steps_per_epoch=train_set.n // train_set.batch_size
+                          , epochs=10
+                          , validation_data=val_set
+                          , validation_steps=val_set.n // val_set.batch_size
+                          , class_weight=class_weight
+                          , callbacks=[neptune_logger]
+                          )
+
+# Plot results (tbd)
+
+# Evaluate model performance
+tl_results = tl_model.evaluate(test_set)
+print('Transfer learning model loss evaluated on the test data: {:.2f}%'.format(tl_results[0] * 100))
+print('Transfer learning model accuracy evaluated on the test data: {:.2f}%'.format(tl_results[1] * 100))
