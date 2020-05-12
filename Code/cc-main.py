@@ -309,3 +309,29 @@ plt_acc_loss(model=history)
 results = model.evaluate(test_set)
 print('Model loss evaluated on the test data: {:.2f}%'.format(results[0] * 100))
 print('Model accuracy evaluated on the test data: {:.2f}%'.format(results[1] * 100))
+
+
+# Transfer learning ------------------------------------------------------------------------------------------
+# Prepare data (optional, depending on pre-trained model requirements, e.g. input shape)
+
+# Load pre-trained model
+# MobileNet2 (could also use another one):
+base_model=tf.keras.applications.MobileNetV2(input_shape=train_set.image_shape,
+                                             include_top=False,
+                                             weights='imagenet')
+
+# Define additional layers and final model
+average_layer=tf.keras.layers.GlobalAveragePooling2D()
+tl_output=Dense(units=n_classes, activation=activation, name='tl_output')
+tl_model = Sequential([base_model,
+                       average_layer,
+                       tl_output]
+                      , name='tl_model')
+
+# Compile model
+tl_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=set_lr)
+              , loss=loss
+              , metrics=metrics
+              )
+
+tl_model.summary()
